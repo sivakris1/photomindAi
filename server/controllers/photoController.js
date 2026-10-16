@@ -52,3 +52,23 @@ export const getAllPhotos = async(req,res) =>{
     res.status(500).json({ error: 'Failed to fetch photos' });
     }
 }
+
+export const deletePhoto = async(req, res) => {
+    try {
+        const photo = await Photo.findById(req.params.id);
+
+        if(!photo){
+             return res.status(404).json({ error: 'Photo not found' });
+        }
+
+          if (fs.existsSync(photo.filepath)) {
+      fs.unlinkSync(photo.filepath);
+    }
+
+       await Photo.findByIdAndDelete(req.params.id);
+     res.json({ message: 'Photo deleted successfully' });
+  } catch (error) {
+    console.error('Delete Photo Error:', error);
+    res.status(500).json({ error: 'Failed to delete photo' });
+  }
+}
