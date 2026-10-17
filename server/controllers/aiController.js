@@ -28,26 +28,72 @@ export const semanticSearch = async (req, res) => {
       return res.json({ query, totalResults: 0, results: [] });
     }
 
-    const scoredPhotos = photos.map((photo) => {
-        const similarity = calculateCosineSimilarity(queryEmbedding, photo.embedding);
+    const scoredPhotos = photos
+      .map((photo) => {
+        const similarity = calculateCosineSimilarity(
+          queryEmbedding,
+          photo.embedding,
+        );
         return {
           _id: photo._id,
           title: photo.title,
           url: photo.url,
           filename: photo.filename,
           createdAt: photo.createdAt,
-          similarityScore: Number((similarity * 100).toFixed(2)) // score as percentage
+          similarityScore: Number((similarity * 100).toFixed(2)), // score as percentage
         };
-    }).filter((photo) => photo.similarity >= threshold * 100).sort((a,b) => b.similarityScore - a.similarityScore);
+      })
+      .filter((photo) => photo.similarity >= threshold * 100)
+      .sort((a, b) => b.similarityScore - a.similarityScore);
 
     console.log(` Found ${scoredPhotos.length} relevant photos.`);
     res.json({
       query,
       totalResults: scoredPhotos.length,
-      results: scoredPhotos
+      results: scoredPhotos,
     });
   } catch (error) {
-    console.error('Semantic Search Error:', error);
-    res.status(500).json({ error: 'Search failed', details: error.message });
+    console.error("Semantic Search Error:", error);
+    res.status(500).json({ error: "Search failed", details: error.message });
+  }
+};
+
+export const findSimilarPhotos = async (req, res) => {
+  try {
+    const targetPhoto = await Photo.findById(req.params.id);
+
+    if (!targetPhoto) {
+      return res.status(404).json({ error: "Target photo not found" });
+    }
+
+    const otherPhotos = await Photo.find({ _id: { $ne: targetPhoto.id } });
+
+    const similarPhotos = otherPhotos
+      .map((photo) => {
+        const similarity = calculateCosineSimilarity(
+          targetPhoto.embedding,
+          photo.embedding,
+        );
+        return {
+          _id: photo._id,
+          title: photo.title,
+          url: photo.url,
+          similarityScore: Number((similarity * 100).toFixed(2))
+        };
+      })
+      .filter((photo) => photo.similarityScore > 20)
+      .sort((a, b) => b.similarityScore - a.similarityScore);
+    res.json({
+      targetPhoto: {
+        _id: targetPhoto._id,
+        title: targetPhoto.title,
+        url: targetPhoto.url,
+      },
+      similarCount: similarPhotos.length,
+      results: similarPhotos,
+    });
+  } catch (error) {
+    console.error("Similar Photos Error:", error);
+    res.status(500).json( { error: "Failed to find similar photos" });
   }
 };
