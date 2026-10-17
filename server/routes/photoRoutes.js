@@ -11,3 +11,5 @@ const router = express.Router();
 router.post('/upload', upload.single('image'), uploadPhoto);
 router.get('/', getAllPhotos);
 router.delete('/:id', deletePhoto);
+
+export default router;
