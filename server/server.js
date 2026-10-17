@@ -13,6 +13,8 @@ import {
 } from './services/aiEmbeddingService.js';
 
 import photoRoutes from './routes/photoRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
+
 
 dotenv.config();
 
@@ -25,6 +27,10 @@ app.use(express.json());
 
 // Serve uploaded images statically
 app.use('/uploads', express.static(path.resolve('uploads')));
+
+
+app.use('/api/photos', photoRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Health Check Route
 app.get('/api/health', (req, res) => {
