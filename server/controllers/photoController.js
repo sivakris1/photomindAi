@@ -1,6 +1,6 @@
 import fs from "fs";
-import Photo from "../models/Photo";
-import { getImageEmbedding } from "../services/aiEmbeddingService";
+import Photo from "../models/Photo.js";
+import { getImageEmbedding } from "../services/aiEmbeddingService.js";
 
 export const uploadPhoto = async (req, res) => {
   try {
