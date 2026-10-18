@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sparkles, Plus } from 'lucide-react';
 
-const NavBar = () => {
+const NavBar = ({onOpenUpload}) => {
   return (
       <header className="navbar">
       <div className="nav-brand">
