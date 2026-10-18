@@ -26,11 +26,11 @@ export const searchPhotos = async(query) => {
 }
 
 export const findSimilarPhotos = async(photoId) => {
-    const response = await axios.post(`${API_BASE_URL}/ai/similar/${photoId}`)
+    const response = await axios.get(`${API_BASE_URL}/ai/similar/${photoId}`)
     return response.data.results;
 }
 
 export const deletePhoto = async(photoId) => {
     const response = await axios.delete(`${API_BASE_URL}/photos/${photoId}`);
     return response.data;
-}
+} 
