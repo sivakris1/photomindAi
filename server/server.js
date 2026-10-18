@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
 
-import Photo from './models/Photo';
-import upload from './middleware/uploadMiddleware';
+import Photo from './models/Photo.js';
+import upload from './middleware/uploadMiddleware.js';
 import {
   getImageEmbedding,
   getTextEmbedding,
