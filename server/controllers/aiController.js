@@ -1,8 +1,8 @@
-import Photo from "../models/Photo";
+import Photo from "../models/Photo.js";
 import {
   calculateCosineSimilarity,
   getTextEmbedding,
-} from "../services/aiEmbeddingService";
+} from "../services/aiEmbeddingService.js";
 
 /**
  * 1. Semantic Text Search
@@ -43,7 +43,7 @@ export const semanticSearch = async (req, res) => {
           similarityScore: Number((similarity * 100).toFixed(2)), // score as percentage
         };
       })
-      .filter((photo) => photo.similarity >= threshold * 100)
+      .filter((photo) => photo.similarityScore >= threshold * 100)
       .sort((a, b) => b.similarityScore - a.similarityScore);
 
     console.log(` Found ${scoredPhotos.length} relevant photos.`);
