@@ -1,122 +1,186 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import React, { useState, useEffect } from "react";
+import Navbar from "./components/NavBar.jsx";
+import SearchBar from "./components/SearchBar.jsx";
+import PhotoCard from "./components/PhotoCard.jsx";
+import UploadModal from "./components/UploadModal.jsx";
+import {
+  fetchPhotos,
+  uploadPhoto,
+  searchPhotos,
+  findSimilarPhotos,
+  deletePhoto,
+} from "./api/api";
+import { Image as ImageIcon, Loader2 } from "lucide-react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [photos, setPhotos] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [activeQuery, setActiveQuery] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+  const loadGallery = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMsg("");
+      const data = await fetchPhotos();
+      setPhotos(data);
+      setActiveQuery("");
+    } catch (error) {
+      console.error("Failed to load photos:", err);
+      setErrorMsg(
+        "Could not connect to the backend server. Make sure node server.js is running.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  useEffect(()=>{
+    loadGallery();
+  },[])
+
+   const handleSearch = async (query) => {
+    try {
+      setIsSearching(true);
+      setErrorMsg('');
+      setActiveQuery(query);
+      const results = await searchPhotos(query);
+      setPhotos(results);
+    } catch (err) {
+      console.error('Search failed:', err);
+      setErrorMsg('Search failed. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleClearSearch = () => {
+    loadGallery();
+  }
+
+  const handleFindSimilar = async(photoId, photoTitle) => {
+    try {
+        setIsSearching(true);
+        setActiveQuery(`similar to ${photoTitle || 'selected photo'}`);
+        const results = await findSimilarPhotos(photoId);
+        setPhotos(results);
+    } catch (err) {
+      console.error('Similarity search failed:', err);
+      setErrorMsg('Failed to find similar photos.');
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  const handleUpload = async(file, title) => {
+    try {
+        setIsLoading(true);
+        setErrorMsg('')
+        await uploadPhoto(file, title);
+        await loadGallery();
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Upload failed: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+
+  const handleDelete = async(photoId) => {
+    if (!window.confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+        await deletePhoto(photoId);
+        setPhotos((prev) => prev.filter((p) => p._id !== photoId));
+    } catch (error) {
+        console.error('Delete failed:', err);
+      alert('Failed to delete photo.');
+    }
+  }
+
+   return (
+    <div className="app-container">
+      {/* Navbar with brand & Upload button */}
+      <Navbar onOpenUpload={() => setIsUploadOpen(true)} />
+      {/* Main Content */}
+      <main className="main-content">
+        {/* Search Hero Area */}
+        <section className="hero-section">
+          <h2>Find photos using pure meaning</h2>
+          <p className="hero-subtitle">
+            Powered by OpenAI CLIP neural vectors. Search objects, concepts, or scenes.
           </p>
+          <SearchBar
+            onSearch={handleSearch}
+            onClear={handleClearSearch}
+            isLoading={isSearching}
+          />
+        </section>
+        {/* Error message if server is offline */}
+        {errorMsg && <div className="error-banner">{errorMsg}</div>}
+        {/* Gallery Status Header */}
+        <div className="gallery-header">
+          <div className="status-indicator">
+            {activeQuery ? (
+              <h3>
+                Search Results for: <span>"{activeQuery}"</span> ({photos.length})
+              </h3>
+            ) : (
+              <h3>
+                All Photos <span>({photos.length})</span>
+              </h3>
+            )}
+          </div>
+          {activeQuery && (
+            <button className="btn-link" onClick={handleClearSearch}>
+              View All Photos
+            </button>
+          )}
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Photo Grid */}
+        {isLoading ? (
+          <div className="loading-state">
+            <Loader2 size={36} className="spinner" />
+            <p>Loading photo gallery...</p>
+          </div>
+        ) : photos.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <ImageIcon size={48} />
+            </div>
+            <h4>{activeQuery ? 'No matching photos found' : 'No photos uploaded yet'}</h4>
+            <p>
+              {activeQuery
+                ? 'Try a different search prompt like "certificate", "dog", or "landscape".'
+                : 'Click the "Upload Photo" button in the top right to index your first image!'}
+            </p>
+          </div>
+        ) : (
+          <div className="photo-grid">
+            {photos.map((photo) => (
+              <PhotoCard
+                key={photo._id}
+                photo={photo}
+                onDelete={handleDelete}
+                onFindSimilar={handleFindSimilar}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+      {/* Upload Popup Modal */}
+      <UploadModal
+        isOpen={isUploadOpen}
+        onClose={() => setIsUploadOpen(false)}
+        onUpload={handleUpload}
+        isUploading={isUploading}
+      />
+    </div>
+  );
 }
-
-export default App
