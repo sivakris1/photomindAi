@@ -1,6 +1,6 @@
 import fs from "fs";
 import Photo from "../models/Photo.js";
-import { getImageEmbedding } from "../services/aiEmbeddingService.js";
+import { getImageEmbedding, getTextEmbedding } from "../services/aiEmbeddingService.js";
 
 export const uploadPhoto = async (req, res) => {
   try {
@@ -12,7 +12,10 @@ export const uploadPhoto = async (req, res) => {
 
     console.log(`📸 Processing image: ${req.file.originalname}`);
 
-    const embedding = await getImageEmbedding(req.file.path);
+    const [embedding, extractedText] = await Promise.all([
+      getImageEmbedding(req.file.path),
+      getTextEmbedding(req.file.path)
+    ]);
 
     const newPhoto = new Photo({
       title: req.body.title || req.file.originalname,
@@ -22,6 +25,7 @@ export const uploadPhoto = async (req, res) => {
       size: req.file.size,
       mimetype: req.file.mimetype,
       embedding: embedding,
+      extractedText : extractedText
     });
 
     await newPhoto.save();
