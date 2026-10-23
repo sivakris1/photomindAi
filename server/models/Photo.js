@@ -35,6 +35,11 @@ const photoSchema = new mongoose.Schema({
       message: 'Embedding must be a 512-dimensional vector'
     }
   },
+  extractedText: {
+    type: String,
+    default: '',
+    trim: true
+  },
   createdAt: {
     type: Date,
     default: Date.now
