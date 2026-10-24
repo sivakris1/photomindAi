@@ -1,6 +1,7 @@
 import fs from "fs";
 import Photo from "../models/Photo.js";
 import { getImageEmbedding, getTextEmbedding } from "../services/aiEmbeddingService.js";
+import { extractTextFromImage } from "../services/ocrService.js"; 
 
 export const uploadPhoto = async (req, res) => {
   try {
@@ -14,7 +15,7 @@ export const uploadPhoto = async (req, res) => {
 
     const [embedding, extractedText] = await Promise.all([
       getImageEmbedding(req.file.path),
-      getTextEmbedding(req.file.path)
+      extractTextFromImage(req.file.path)
     ]);
 
     const newPhoto = new Photo({
