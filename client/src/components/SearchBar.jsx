@@ -9,12 +9,13 @@ export default function SearchBar({ onSearch, onClear, isLoading }) {
     if (query.trim()) {
       onSearch(query.trim());
     }
+  }
 
     const handleClear = () => {
       setQuery("");
       onClear();
     };
-  };
+  
 
   return (
     <form className="search-form" onSubmit={handleSubmit}>
@@ -50,4 +51,5 @@ export default function SearchBar({ onSearch, onClear, isLoading }) {
       </button>
     </form>
   );
+
 }
