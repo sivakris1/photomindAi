@@ -30,7 +30,7 @@ export default function App() {
       setPhotos(data);
       setActiveQuery("");
     } catch (error) {
-      console.error("Failed to load photos:", err);
+      console.error("Failed to load photos:", error);
       setErrorMsg(
         "Could not connect to the backend server. Make sure node server.js is running.",
       );
