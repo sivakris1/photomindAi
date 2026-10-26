@@ -25,11 +25,35 @@ export const semanticSearch = async (req, res) => {
 
     const queryEmbedding = await getTextEmbedding(cleanQuery);
 
-    // Fetch all photos from MongoDB 
-    const photos = await Photo.find();
-    if (photos.length === 0) {
+    const vectorCandidates = await Photo.aggregate([
+      {
+        $vectorSearch : {
+          index: "photomind",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: 100, 
+          limit: 20  
+        }
+      },
+      {
+        $project: {
+          _id: 1,
+          title: 1,
+          url: 1,
+          filename: 1,
+          extractedText: 1,
+          createdAt: 1,
+          // MongoDB Atlas automatically attaches the exact cosine similarity score!
+          vectorScore: { $meta: "vectorSearchScore" }
+        }
+      }
+    ])
+
+
+    if (vectorCandidates.length === 0) {
       return res.json({ query, totalResults: 0, results: [] });
     }
+
     // Extract meaningful words from search query (ignore words like 'a', 'the', 'in')
 
     const stopWords = new Set(['a', 'an', 'the', 'in', 'on', 'at', 'with', 'of', 'and', 'for', 'picture', 'photo', 'image']);
@@ -38,7 +62,7 @@ export const semanticSearch = async (req, res) => {
       .filter((word) => word.length > 1 && !stopWords.has(word));
 
     // Score each photo using Hybrid Fusion
-    const scoredPhotos = photos
+    const scoredPhotos = vectorCandidates
       .map((photo) => {
         // Visual CLIP Score (0 to 100) 
         const clipRaw = calculateCosineSimilarity(queryEmbedding, photo.embedding);
